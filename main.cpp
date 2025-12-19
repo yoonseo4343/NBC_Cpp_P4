@@ -7,10 +7,27 @@ class PotionRecipe {
 public:
     std::string potionName;
     std::vector<std::string> ingredients; // 단일 재료에서 재료 '목록'으로 변경
-
+    PotionRecipe() {}
     // 생성자: 재료 목록을 받아 초기화하도록 수정
     PotionRecipe(const std::string& name, const std::vector<std::string>& ingredients)
         : potionName(name), ingredients(ingredients) {
+    }
+    bool isValid() const {
+        if (potionName == "")
+            return false;
+        else
+            return true;
+    }
+    void displayRecipe() {
+        std::cout << "--- [ '" << potionName << "'의 레시피 ] ---" << std::endl;
+        std::cout << "  > 필요 재료: ";
+        for (size_t i = 0; i < ingredients.size(); i++) {
+            if (i == ingredients.size() - 1)
+                std::cout << ingredients[i] << std::endl;
+            else
+                std::cout << ingredients[i] << ", ";
+        }
+        std::cout << "---------------------------\n";
     }
 };
 
@@ -50,16 +67,40 @@ public:
         }
         std::cout << "---------------------------\n";
     }
+    //물약 이름 검색
+    PotionRecipe searchRecipeByName(std::string name) {
+        if (recipes.empty()) {
+            return PotionRecipe();
+        }
+        //레시피 목록 순회
+        for (size_t i = 0; i < recipes.size(); i++) {
+            if (recipes[i].potionName == name) {
+                return recipes[i];
+            }
+            else if (i == recipes.size() - 1) {
+                return PotionRecipe();
+            }
+        }
+        return PotionRecipe();
+    }
+    //물약 재료 검색
+    //std::vector<PotionRecipe> searchRecipeByIngredient(std::string ingredient) {
+    //    if (recipes.empty()) {
+    //        return ;
+    //    }
+    //}
 };
 
 int main() {
     AlchemyWorkshop myWorkshop;
 
     while (true) {
-        std::cout << "⚗️ 연금술 공방 관리 시스템" << std::endl;
+        std::cout << "연금술 공방 관리 시스템" << std::endl;
         std::cout << "1. 레시피 추가" << std::endl;
         std::cout << "2. 모든 레시피 출력" << std::endl;
-        std::cout << "3. 종료" << std::endl;
+        std::cout << "3. 물약 이름으로 레시피 검색" << std::endl;
+        std::cout << "4. 물약 재료로 레시피 검색" << std::endl;
+        std::cout << "9. 종료" << std::endl;
         std::cout << "선택: ";
 
         int choice;
@@ -108,6 +149,25 @@ int main() {
 
         }
         else if (choice == 3) {
+            std::string name;
+            std::cout << "물약 이름: ";
+            std::cin >> name;
+            PotionRecipe temp = myWorkshop.searchRecipeByName(name);
+            if (temp.isValid()) {
+                //출력
+                temp.displayRecipe();
+            }
+            else
+                std::cout << ">> 검색 결과가 없습니다." << std::endl;
+
+        }
+        else if (choice == 4) {
+            std::string ingredients;
+            std::cout << "물약 재료: ";
+            std::cin >> ingredients;
+
+        }
+        else if (choice == 9) {
             std::cout << "공방 문을 닫습니다..." << std::endl;
             break;
 
