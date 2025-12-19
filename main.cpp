@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <vector>
 #include <string>
+#include <map>
 
 // PotionRecipe 클래스: 재료 목록을 vector<string>으로 변경
 class PotionRecipe {
@@ -31,16 +32,17 @@ public:
     }
 };
 
-// AlchemyWorkshop 클래스: 레시피 목록을 관리
-class AlchemyWorkshop {
+// AlchemyWorkshop 클래스: 레시피 목록을 관리 - > 레시피 매니저
+class RecipeManager {
 private:
     std::vector<PotionRecipe> recipes;
 
 public:
     // addRecipe 메서드: 재료 목록(vector)을 매개변수로 받도록 수정
-    void addRecipe(const std::string& name, const std::vector<std::string>& ingredients) {
+    PotionRecipe* addRecipe(const std::string& name, const std::vector<std::string>& ingredients) {
         recipes.push_back(PotionRecipe(name, ingredients));
         std::cout << ">> 새로운 레시피 '" << name << "'이(가) 추가되었습니다." << std::endl;
+        return &recipes.back();
     }
 
     // 모든 레시피 출력 메서드
@@ -68,23 +70,23 @@ public:
         std::cout << "---------------------------\n";
     }
     //물약 이름 검색
-    PotionRecipe searchRecipeByName(std::string name) {
+    PotionRecipe* findRecipeByName(std::string name) {
         if (recipes.empty()) {
-            return PotionRecipe();
+            return nullptr;
         }
         //레시피 목록 순회
         for (size_t i = 0; i < recipes.size(); i++) {
             if (recipes[i].potionName == name) {
-                return recipes[i];
+                return &recipes[i];
             }
             else if (i == recipes.size() - 1) {
-                return PotionRecipe();
+                return nullptr;
             }
         }
-        return PotionRecipe();
+        return nullptr;
     }
     //물약 재료 검색
-    std::vector<PotionRecipe> searchRecipeByIngredient(std::string ingredient) {
+    std::vector<PotionRecipe> findRecipeByIngredient(std::string ingredient) {
         if (recipes.empty()) {
             return {};
         }
@@ -101,17 +103,62 @@ public:
         return tempVec;
     }
 };
-
+//재고 관리 매니저
+class StockManager {
+private:
+    std::map<std::string, int> potionStock;
+    const int MAX_STOCK = 3;
+public:
+    void initializeStock(std::string potionName) {
+        //레시피가 공방에 추가될때 호출되는 함수
+        potionStock[potionName] = MAX_STOCK;
+        std::cout << ">> 재고 "<<MAX_STOCK<<"개가 추가되었습니다." << std::endl;
+    }
+    bool dispensePotion(std::string potionName) {
+        //재고 1개 이상이면 true 아니면 false 반환
+        if (potionStock[potionName] > 0) {
+            potionStock[potionName]--; // 1개 지급
+            return true;
+        }
+        else
+            return false;
+    }
+    void returnPotion(std::string  potionName) {
+        //공병 반환 시 호출
+        if (potionStock.count(potionName)) {
+            if (potionStock[potionName] < MAX_STOCK)
+            {
+                potionStock[potionName] += 1;
+                std::cout <<">> "<< potionName << " 공병을 반환합니다.\n";
+            }
+            else
+                std::cout << ">> 최대 재고를 초과하여 반환할 수 없습니다.\n";
+        }
+        else
+            std::cout << ">> 반환할 수 없는 공병입니다.\n";
+    }
+    int getStock(std::string potionName) {
+        if (potionStock.count(potionName)) {
+            return potionStock[potionName];
+        }
+        else {
+            return 0;
+        }
+    }
+};
 int main() {
-    AlchemyWorkshop myWorkshop;
+    RecipeManager recipeMng;
+    StockManager stockMng;
 
     while (true) {
-        std::cout << "연금술 공방 관리 시스템" << std::endl;
+        std::cout << "-{{ 연금술 공방 관리 시스템 }}-" << std::endl;
         std::cout << "1. 레시피 추가" << std::endl;
         std::cout << "2. 모든 레시피 출력" << std::endl;
         std::cout << "3. 물약 이름으로 레시피 검색" << std::endl;
         std::cout << "4. 물약 재료로 레시피 검색" << std::endl;
-        std::cout << "9. 종료" << std::endl;
+        std::cout << "5. 물약 재고 검색" << std::endl;
+        std::cout << "6. 공병 반환" << std::endl;
+        std::cout << "0. 종료" << std::endl;
         std::cout << "선택: ";
 
         int choice;
@@ -148,7 +195,8 @@ int main() {
 
             // 입력받은 재료가 하나 이상 있을 때만 레시피 추가
             if (!ingredients_input.empty()) {
-                myWorkshop.addRecipe(name, ingredients_input);
+                //recipeMng.addRecipe(name, ingredients_input);
+                stockMng.initializeStock(recipeMng.addRecipe(name, ingredients_input)->potionName); // 초기 재고 세팅
             }
             else {
                 std::cout << ">> 재료가 입력되지 않아 레시피 추가를 취소합니다." << std::endl;
@@ -156,17 +204,19 @@ int main() {
 
         }
         else if (choice == 2) {
-            myWorkshop.displayAllRecipes();
+            recipeMng.displayAllRecipes();
 
         }
         else if (choice == 3) {
             std::string name;
             std::cout << "물약 이름: ";
             std::cin >> name;
-            PotionRecipe temp = myWorkshop.searchRecipeByName(name);
-            if (temp.isValid()) {
+            PotionRecipe* tempC = recipeMng.findRecipeByName(name);
+            if (tempC) {
                 //출력
-                temp.displayRecipe();
+                tempC->displayRecipe();
+                if (stockMng.dispensePotion(tempC->potionName))
+                    std::cout << ">> '" << tempC->potionName << "'이(가) 1개 지급되었습니다.\n";
             }
             else
                 std::cout << ">> 검색 결과가 없습니다." << std::endl;
@@ -176,7 +226,7 @@ int main() {
             std::cout << "물약 재료: ";
             std::cin >> ingredients;
             //재료가 포함된 모든 레시피를 벡터에 저장해서 레시피 이름 출력
-            std::vector<PotionRecipe> vec = myWorkshop.searchRecipeByIngredient(ingredients);
+            std::vector<PotionRecipe> vec = recipeMng.findRecipeByIngredient(ingredients);
             if (vec.empty()) {
                 std::cout << ">> 검색 결과가 없습니다." << std::endl;
             }
@@ -186,9 +236,25 @@ int main() {
                     std::cout << "- " << vec[i].potionName << std::endl;
                 }
                 std::cout << "---------------------------\n";
+                for (size_t i = 0; i < vec.size(); i++) {
+                    if (stockMng.dispensePotion(vec[i].potionName))
+                        std::cout << ">> '" << vec[i].potionName << "'이(가) 1개 지급되었습니다.\n";
+                }
             }
         }
-        else if (choice == 9) {
+        else if (choice == 5) {
+            std::string name;
+            std::cout << "조회할 물약 이름: ";
+            std::cin >> name;
+            std::cout <<">> " << stockMng.getStock(name) << "개 있습니다.\n";
+        }
+        else if (choice == 6) {
+            std::string name;
+            std::cout << "반환할 물약 이름: ";
+            std::cin >> name;
+            stockMng.returnPotion(name);
+        }
+        else if (choice == 0) {
             std::cout << "공방 문을 닫습니다..." << std::endl;
             break;
 
