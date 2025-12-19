@@ -84,11 +84,22 @@ public:
         return PotionRecipe();
     }
     //물약 재료 검색
-    //std::vector<PotionRecipe> searchRecipeByIngredient(std::string ingredient) {
-    //    if (recipes.empty()) {
-    //        return ;
-    //    }
-    //}
+    std::vector<PotionRecipe> searchRecipeByIngredient(std::string ingredient) {
+        if (recipes.empty()) {
+            return {};
+        }
+        //레시피 목록 순회
+        std::vector<PotionRecipe> tempVec;
+        for (size_t i = 0; i < recipes.size(); i++) {
+            //재료 순회
+            for (size_t j = 0; j < recipes[i].ingredients.size(); j++) {
+                if (recipes[i].ingredients[j] == ingredient) {
+                    tempVec.push_back(recipes[i]);
+                }
+            }
+        }
+        return tempVec;
+    }
 };
 
 int main() {
@@ -159,13 +170,23 @@ int main() {
             }
             else
                 std::cout << ">> 검색 결과가 없습니다." << std::endl;
-
         }
         else if (choice == 4) {
             std::string ingredients;
             std::cout << "물약 재료: ";
             std::cin >> ingredients;
-
+            //재료가 포함된 모든 레시피를 벡터에 저장해서 레시피 이름 출력
+            std::vector<PotionRecipe> vec = myWorkshop.searchRecipeByIngredient(ingredients);
+            if (vec.empty()) {
+                std::cout << ">> 검색 결과가 없습니다." << std::endl;
+            }
+            else {
+                std::cout << "----- [ 관련 레시피 ] -----" << std::endl;
+                for (size_t i = 0; i < vec.size(); i++) {
+                    std::cout << "- " << vec[i].potionName << std::endl;
+                }
+                std::cout << "---------------------------\n";
+            }
         }
         else if (choice == 9) {
             std::cout << "공방 문을 닫습니다..." << std::endl;
